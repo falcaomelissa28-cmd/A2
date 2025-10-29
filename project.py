@@ -1,9 +1,11 @@
-             
-
-import pandas as pd
+             import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
-import re  
+import re
+import streamlit as st # Adicionar importação do Streamlit
+
+# --- 1. CONFIGURAÇÃO E DADOS ---
+st.title("⚖️ Análise de Frequência de Termos em Fashion Law")
 
 PALAVRAS_CHAVE = [
     'marca', 'registro', 'trademark', 'pirataria', 'contrafação',
@@ -24,16 +26,11 @@ data = {
 }
 
 df = pd.DataFrame(data)
-df.to_csv('dados_fashion_law.csv', index=False)
+# df.to_csv('dados_fashion_law.csv', index=False) # Removido para simplificar no Streamlit
 
+# --- 2. FUNÇÃO DE ANÁLISE (Definição única e correta) ---
 def analisar_textos(dataframe, palavras_chave):
     """Conta a ocorrência de palavras-chave nos textos."""
-    textos_min = dataframe['Texto_Documento'].str.lower()  # padroniza
-    contagem_palavras = Counter()
-    contagem_por_doc = {}
-
-def analisar_textos(dataframe, palavras_chave):
-    
     textos_min = dataframe['Texto_Documento'].str.lower()
 
     contagem_palavras = Counter()
@@ -42,49 +39,46 @@ def analisar_textos(dataframe, palavras_chave):
     for index, texto in enumerate(textos_min):
         total_termos_doc = 0
         for palavra in palavras_chave:
+            # Garante que apenas palavras inteiras sejam contadas (usando regex)
             ocorrencias = re.findall(r'\b' + re.escape(palavra) + r'\b', texto)
             num_ocorrencias = len(ocorrencias)
+            
             if num_ocorrencias > 0:
                 contagem_palavras[palavra] += num_ocorrencias
                 total_termos_doc += num_ocorrencias
+        
         contagem_por_doc[dataframe.loc[index, 'ID']] = total_termos_doc
 
     return contagem_palavras, contagem_por_doc
 
- for index, texto in enumerate(texto_min):
-        total_termos_doc = 0
-        for palavra in palavras_chave:
-
-          ocorrencias = re.findall(r'\b' + re.escape(palavra) + r'\b', texto)
-            num_ocorrencias = len(ocorrencias)
-
-            if num_ocorrencias > 0:
-                contagem_palavras[palavra] += num_ocorrencias
-                total_termos_doc += num_ocorrencias
-
-          contagem_por_doc[dataframe.loc[index, 'ID']] = total_termos_doc
-
+# --- 3. EXECUÇÃO DA ANÁLISE ---
 frequencia_palavras, ranking_documentos = analisar_textos(df, PALAVRAS_CHAVE)
 
-print("--- RELATÓRIO DE ANÁLISE FASHION LAW ---")
-print(f"Total de Documentos Analisados: {len(df)}")
-print("-" * 40)
 
-print("Frequência Absoluta das Palavras-Chave:")
-for palavra, contagem in frequencia_palavras.most_common():
-    print(f"- {palavra.capitalize()}: {contagem}")
-print("-" * 40)
+# --- 4. EXIBIÇÃO DOS RESULTADOS NO STREAMLIT ---
+st.header("Relatório de Análise")
 
-print("Ranking dos Documentos (IDs) com Maior Ocorrência de Termos:")
+# Exibe a tabela de dados
+st.subheader("Dados Originais Analisados")
+st.dataframe(df)
+
+# Exibe a frequência das palavras-chave
+st.subheader("Frequência Absoluta das Palavras-Chave")
+frequencia_df = pd.DataFrame(frequencia_palavras.most_common(), columns=['Termo', 'Frequência'])
+st.table(frequencia_df)
+
+# Exibe o ranking de documentos
+st.subheader("Ranking de Documentos (IDs)")
 ranking_sorted = sorted(ranking_documentos.items(), key=lambda item: item[1], reverse=True)
-for id_doc, contagem in ranking_sorted[:3]:
-    print(f"ID {id_doc}: {contagem} ocorrências totais.")
-print("--- FIM DO RELATÓRIO ---")
+for id_doc, contagem in ranking_sorted:
+    st.write(f"**ID {id_doc}**: {contagem} ocorrências totais.")
 
-
-
+# --- 5. VISUALIZAÇÃO DO GRÁFICO (Corrigido para Streamlit) ---
 if frequencia_palavras:
+    st.subheader("Visualização Gráfica")
     top_palavras = dict(frequencia_palavras.most_common(10))
+    
+    # Cria a figura do Matplotlib
     plt.figure(figsize=(10, 6))
     plt.bar(top_palavras.keys(), top_palavras.values(), color='skyblue')
     plt.xlabel('Termos de Fashion Law')
@@ -92,5 +86,6 @@ if frequencia_palavras:
     plt.title('Frequência dos Principais Termos de PI e Contrafação')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
-    plt.savefig('frequencia_termos_fashion_law.png')
-    plt.show()
+    
+    # st.pyplot() é a função correta para exibir o gráfico
+    st.pyplot(plt)
