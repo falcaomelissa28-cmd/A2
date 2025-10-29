@@ -52,7 +52,7 @@ def analisar_textos(dataframe, palavras_chave):
 
 frequencia_palavras, ranking_documentos = analisar_textos(df, PALAVRAS_CHAVE)
 
-print("--- 📝 RELATÓRIO DE ANÁLISE FASHION LAW ---")
+print("--- RELATÓRIO DE ANÁLISE FASHION LAW ---")
 print(f"Total de Documentos Analisados: {len(df)}")
 print("-" * 40)
 
