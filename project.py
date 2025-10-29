@@ -5,24 +5,18 @@ import re
 import unicodedata
 from collections import Counter
 
-# ----------------------------
-# CONFIGURAÇÃO DO APP
-# ----------------------------
+
 st.set_page_config(page_title="Fashion Law Analyzer", page_icon="👗", layout="centered")
 
-st.title("👗 Fashion Law Analyzer")
+st.title("Fashion Law Analyzer")
 st.subheader("Análise de Propriedade Intelectual e Contrafação na Moda")
 
-# Palavras-chave principais
 PALAVRAS_CHAVE = [
     'marca', 'registro', 'trademark', 'pirataria', 'contrafação',
     'imitação', 'trade dress', 'design', 'autoral',
     'propriedade intelectual', 'uso indevido', 'direitos autorais'
 ]
 
-# ----------------------------
-# FUNÇÕES AUXILIARES
-# ----------------------------
 def normalize_text(text):
     """Remove acentos, coloca minúsculas e normaliza espaços."""
     if not isinstance(text, str):
@@ -70,14 +64,12 @@ def analisar_textos(df, palavras_chave):
 
     return contagem_palavras, contagem_por_doc
 
-# ----------------------------
-# INTERFACE STREAMLIT
-# ----------------------------
+
 st.markdown("Envie um arquivo CSV contendo uma coluna **Texto_Documento** para análise.")
 
 uploaded_file = st.file_uploader("📁 Escolha o arquivo CSV", type=["csv"])
 
-# Carrega CSV de exemplo se o usuário não enviar um
+
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
 else:
@@ -94,14 +86,14 @@ else:
         ]
     })
 
-if st.button("🔍 Analisar"):
+if st.button("Analisar"):
     if 'Texto_Documento' not in df.columns:
         st.error("O arquivo deve conter uma coluna chamada 'Texto_Documento'.")
     else:
         contagem_palavras, contagem_por_doc = analisar_textos(df, PALAVRAS_CHAVE)
 
-        # Relatório textual
-        st.subheader("📝 Relatório de Análise")
+       
+        st.subheader("Relatório de Análise")
         st.write(f"**Total de documentos analisados:** {len(df)}")
 
         freq_df = pd.DataFrame(contagem_palavras.most_common(), columns=["Termo", "Frequência"])
@@ -111,8 +103,8 @@ if st.button("🔍 Analisar"):
         st.write("**Documentos com mais termos relevantes:**")
         st.table(pd.DataFrame(top_docs, columns=["ID do Documento", "Total de Ocorrências"]))
 
-        # Gráfico de barras
-        st.subheader("📊 Gráfico de Frequência de Termos")
+        
+        st.subheader("Gráfico de Frequência de Termos")
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.bar(freq_df["Termo"].head(10), freq_df["Frequência"].head(10))
         ax.set_xlabel("Termos de Fashion Law")
