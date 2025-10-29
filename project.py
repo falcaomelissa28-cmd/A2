@@ -1,9 +1,4 @@
-FashionLaw_PI_Monitor/
-├── fashion_law_analyzer.py       
-├── dados_fashion_law.csv       
-├── frequencia_termos_fashion_law.png  
-├── README.md                     
-├── requirements.txt              
+             
 
 import pandas as pd
 import matplotlib.pyplot as plt
