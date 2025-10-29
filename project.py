@@ -32,7 +32,26 @@ def analisar_textos(dataframe, palavras_chave):
     contagem_palavras = Counter()
     contagem_por_doc = {}
 
- for index, texto in enumerate(textos_min):
+def analisar_textos(dataframe, palavras_chave):
+    
+    textos_min = dataframe['Texto_Documento'].str.lower()
+
+    contagem_palavras = Counter()
+    contagem_por_doc = {}
+
+    for index, texto in enumerate(textos_min):
+        total_termos_doc = 0
+        for palavra in palavras_chave:
+            ocorrencias = re.findall(r'\b' + re.escape(palavra) + r'\b', texto)
+            num_ocorrencias = len(ocorrencias)
+            if num_ocorrencias > 0:
+                contagem_palavras[palavra] += num_ocorrencias
+                total_termos_doc += num_ocorrencias
+        contagem_por_doc[dataframe.loc[index, 'ID']] = total_termos_doc
+
+    return contagem_palavras, contagem_por_doc
+
+ for index, texto in enumerate(texto_min):
         total_termos_doc = 0
         for palavra in palavras_chave:
 
