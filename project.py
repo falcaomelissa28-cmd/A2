@@ -74,6 +74,5 @@ if frequencia_palavras:
     plt.tight_layout()
     plt.savefig('frequencia_termos_fashion_law.png')
 
-    pip install -r requirements.txt
-streamlit run project.py
-    plt.show()
+plt.savefig('frequencia_termos_fashion_law.png')
+plt.show()
