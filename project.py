@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import re
 
-# --- 1. CONFIGURAÇÃO E DADOS SIMULADOS ---
 
 PALAVRAS_CHAVE = [
     'marca', 'registro', 'trademark', 'pirataria', 'contrafação',
@@ -28,7 +27,6 @@ data = {
 df = pd.DataFrame(data)
 df.to_csv('dados_fashion_law.csv', index=False)
 
-# --- 2. FUNÇÃO DE ANÁLISE ---
 
 def analisar_textos(dataframe, palavras_chave):
     textos_min = dataframe['Texto_Documento'].str.lower()
@@ -47,13 +45,11 @@ def analisar_textos(dataframe, palavras_chave):
 
     return contagem_palavras, contagem_por_doc
 
-# --- 3. EXECUÇÃO DA ANÁLISE ---
 
 frequencia_palavras, ranking_documentos = analisar_textos(df, PALAVRAS_CHAVE)
 
-# --- 4. RELATÓRIO ---
 
-print("\n--- 📝 RELATÓRIO DE ANÁLISE FASHION LAW ---")
+print("\n--- RELATÓRIO DE ANÁLISE FASHION LAW ---")
 print(f"Total de Documentos Analisados: {len(df)}")
 print("-" * 40)
 print("Frequência Absoluta das Palavras-Chave:")
@@ -66,7 +62,6 @@ for id_doc, contagem in ranking_sorted[:3]:
     print(f"ID {id_doc}: {contagem} ocorrências")
 print("--- FIM DO RELATÓRIO ---\n")
 
-# --- 5. GRÁFICO ---
 
 if frequencia_palavras:
     top_palavras = dict(frequencia_palavras.most_common(10))
@@ -78,4 +73,7 @@ if frequencia_palavras:
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     plt.savefig('frequencia_termos_fashion_law.png')
+
+    pip install -r requirements.txt
+streamlit run project.py
     plt.show()
