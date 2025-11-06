@@ -63,11 +63,11 @@ col1, col2 = st.columns([3,1])
 with col1:
     nome_busca = st.text_input("Nome do deputado:")
     deputados = buscar_deputados(nome_busca) if nome_busca else buscar_deputados()
-   nomes = [
-    f"{d.get('nome','')} — ID:{d.get('id','')} "
-    f"({d.get('siglaPartido','')}/{d.get('uf','')})"
-    for d in deputados
-]
+       nomes = [
+            f"{d.get('nome','')} — ID:{d.get('id','')} "
+            f"({d.get('siglaPartido','')}/{d.get('uf','')})"
+            for d in deputados
+    ]
     escolha = st.selectbox("Escolha um deputado:", [""] + nomes)
     selected_id = None
     if escolha:
