@@ -1,77 +1,133 @@
 
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
+
+    import streamlit as st
+import requests
+import plotly.express as px
 from collections import Counter
-import re
+from typing import Optional, Dict
+from urllib.parse import urlencode
 
-st.set_page_config(page_title="Fashion Law PI Monitor", page_icon="👗")
+API_BASE = "https://dadosabertos.camara.leg.br/api/v2"
 
-st.title("👗 Fashion Law PI Monitor")
-st.write("Análise de Propriedade Intelectual e Contrafação na Moda")
+st.set_page_config(page_title="Proposições por Deputado", layout="wide")
+
+st.title("Proposições por Deputado — Câmara dos Deputados")
+
+st.markdown("""
+Este app consulta a **API de Dados Abertos da Câmara dos Deputados** e exibe:
+- As proposições apresentadas por um deputado;
+- Um **gráfico de temas** das proposições;
+- Um **gráfico de evolução anual** das proposições.
+""")
 
 
-PALAVRAS_CHAVE = [
-    'marca', 'registro', 'trademark', 'pirataria', 'contrafação',
-    'imitação', 'trade dress', 'design', 'autoral', 'propriedade intelectual',
-    'uso indevido', 'direitos autorais'
-]
+st.sidebar.header("Configurações")
+api_key = st.sidebar.text_input("API Key", value="", type="password")
+
+def make_headers() -> Dict[str,str]:
+    headers = {"Accept": "application/json"}
+    if api_key.strip():
+        headers["Authorization"] = f"Bearer {api_key.strip()}"
+    return headers
 
 
-uploaded_file = st.file_uploader("📂 Envie um arquivo CSV com os textos (opcional)", type=["csv"])
+@st.cache_data(show_spinner=False)
+def buscar_deputados(nome: Optional[str] = None, pagina: int = 1, itens_por_pagina: int = 100):
+    params = {"pagina": pagina, "itens": itens_por_pagina}
+    if nome:
+        params["nome"] = nome
+    url = f"{API_BASE}/deputados?{urlencode(params)}"
+    r = requests.get(url, headers=make_headers(), timeout=10)
+    r.raise_for_status()
+    return r.json().get("dados", [])
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+@st.cache_data(show_spinner=False)
+def buscar_deputado_por_id(id_deputado: int):
+    url = f"{API_BASE}/deputados/{id_deputado}"
+    r = requests.get(url, headers=make_headers(), timeout=10)
+    r.raise_for_status()
+    return r.json().get("dados", {})
+
+@st.cache_data(show_spinner=False)
+def buscar_proposicoes_por_deputado(id_deputado:int, pagina:int=1, itens_por_pagina:int=200):
+    params = {"idAutor": id_deputado, "pagina": pagina, "itens": itens_por_pagina}
+    url = f"{API_BASE}/proposicoes?{urlencode(params)}"
+    r = requests.get(url, headers=make_headers(), timeout=10)
+    r.raise_for_status()
+    return r.json().get("dados", [])
+
+
+st.header(" Selecione o deputado")
+
+col1, col2 = st.columns([3,1])
+with col1:
+    nome_busca = st.text_input("Nome do deputado:")
+    deputados = buscar_deputados(nome_busca) if nome_busca else buscar_deputados()
+    nomes = [f"{d['nome']} — ID:{d['id']} ({d['siglaPartido']}/{d['uf']})" for d in deputados]
+    escolha = st.selectbox("Escolha um deputado:", [""] + nomes)
+    selected_id = None
+    if escolha:
+        try:
+            selected_id = int(escolha.split("ID:")[1].split()[0])
+        except:
+            selected_id = None
+
+with col2:
+    id_manual = st.text_input("Ou ID direto:")
+    if id_manual.strip().isdigit():
+        selected_id = int(id_manual.strip())
+
+if not selected_id:
+    st.info("Digite um nome ou ID de deputado acima.")
+    st.stop()
+
+
+deputado = buscar_deputado_por_id(selected_id)
+st.subheader(f"{deputado.get('nome')} ({deputado.get('siglaPartido')}/{deputado.get('uf')})")
+st.write(f"**E-mail:** {deputado.get('email','-')} | **URL:** {deputado.get('uri')}")
+
+
+st.header("2️⃣ Proposições apresentadas")
+dados = buscar_proposicoes_por_deputado(selected_id, pagina=1, itens_por_pagina=200)
+
+if not dados:
+    st.warning("Nenhuma proposição encontrada para este deputado.")
+    st.stop()
+
+
+for p in dados[:10]:
+    st.markdown(f"- **{p.get('siglaTipo','')} {p.get('numero','')}/{p.get('ano','')}** — {p.get('ementa','')}")
+
+
+st.header("3️⃣ Gráfico por tema")
+
+temas = []
+for p in dados:
+    if p.get("temas"):
+        for t in p["temas"]:
+            if "nome" in t:
+                temas.append(t["nome"])
+
+if temas:
+    contagem = Counter(temas)
+    df_temas = [{"Tema": k, "Quantidade": v} for k, v in contagem.items()]
+    fig_temas = px.bar(df_temas, x="Quantidade", y="Tema", orientation="h",
+                       title="Distribuição de Proposições por Tema",
+                       labels={"Tema": "Tema", "Quantidade": "Número de proposições"})
+    st.plotly_chart(fig_temas, use_container_width=True)
 else:
-    st.info("Usando base de dados simulada...")
-    data = {
-        'ID': [101, 102, 103, 104, 105],
-        'Data': ['2025-01-10', '2025-02-15', '2025-03-20', '2025-04-01', '2025-05-05'],
-        'Texto_Documento': [
-            "A grande marca de luxo ingressou com ação de contrafação pelo design não autorizado do produto. A propriedade intelectual foi violada.",
-            "Novo registro de marca para a coleção sustentável. A empresa protegeu sua marca e seu trade dress.",
-            "Discussão sobre a proteção de direitos autorais em estampas de moda. A imitação de tecidos é uma preocupação.",
-            "A pirataria de tênis continua sendo um desafio. Uso indevido de logo é recorrente.",
-            "Registro da nova cor como marca tridimensional. Fortalecimento da proteção da marca."
-        ]
-    }
-    df = pd.DataFrame(data)
+    st.info("A API não retornou temas detalhados para essas proposições.")
 
 
-def analisar_textos(dataframe, palavras_chave):
-    textos_min = dataframe['Texto_Documento'].str.lower()
-    contagem_palavras = Counter()
-    contagem_por_doc = {}
+st.header("Gráfico de proposições por ano")
 
-    for index, texto in enumerate(textos_min):
-        total_termos_doc = 0
-        for palavra in palavras_chave:
-            ocorrencias = re.findall(r'\b' + re.escape(palavra) + r'\b', texto)
-            num_ocorrencias = len(ocorrencias)
-            if num_ocorrencias > 0:
-                contagem_palavras[palavra] += num_ocorrencias
-                total_termos_doc += num_ocorrencias
-        contagem_por_doc[dataframe.loc[index, 'ID']] = total_termos_doc
-
-    return contagem_palavras, contagem_por_doc
-
-
-if st.button("🔍 Analisar Textos"):
-    freq, ranking = analisar_textos(df, PALAVRAS_CHAVE)
-
-    st.subheader("📊 Frequência das Palavras-Chave")
-    freq_df = pd.DataFrame(freq.items(), columns=["Palavra", "Frequência"]).sort_values("Frequência", ascending=False)
-    st.dataframe(freq_df)
-
-    st.subheader("🏆 Top 3 Documentos com mais termos de interesse")
-    ranking_sorted = sorted(ranking.items(), key=lambda x: x[1], reverse=True)
-    top_docs = pd.DataFrame(ranking_sorted[:3], columns=["ID do Documento", "Ocorrências"])
-    st.table(top_docs)
-
-    
-    st.subheader("📈 Gráfico de Frequência")
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(freq_df["Palavra"], freq_df["Frequência"], color="skyblue")
-    plt.xticks(rotation=45, ha="right")
-    plt.title("Frequência de Termos de PI e Contrafação")
-    st.pyplot(fig)
+anos = [p.get("ano") for p in dados if p.get("ano")]
+if anos:
+    contagem_anos = Counter(anos)
+    df_anos = [{"Ano": k, "Proposições": v} for k, v in sorted(contagem_anos.items())]
+    fig_anos = px.line(df_anos, x="Ano", y="Proposições", markers=True,
+                       title="Evolução do número de proposições por ano",
+                       labels={"Ano": "Ano", "Proposições": "Número de proposições"})
+    st.plotly_chart(fig_anos, use_container_width=True)
+else:
+    st.info("Não há dados de ano disponíveis para as proposições desse deputado.")
