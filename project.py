@@ -1,6 +1,6 @@
 
 
-    import streamlit as st
+import streamlit as st
 import requests
 import plotly.express as px
 from collections import Counter
