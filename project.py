@@ -28,7 +28,7 @@ def buscar_proposicoes_por_deputado(deputado_id):
 
 st.sidebar.header("Escolha um deputado")
 deputados = buscar_deputados()
-nomes = [f"{d['nome']} ({d['siglaPartido']}/{d['uf']})" for d in deputados]
+nomes = [f"{d.get('nome', 'Desconhecido')} ({d.get('siglaPartido', '-')}/{d.get('uf', '-')})" for d in deputados]
 nome_escolhido = st.sidebar.selectbox("Deputado:", nomes)
 
 
