@@ -32,7 +32,7 @@ def buscar_deputados(nome):
     """Busca deputados por nome."""
     url = f"{API_BASE}/deputados?{urlencode({'nome': nome, 'itens': 100})}"
     dados = requisitar_json(url)
-    return dados.get("dados", []) if dados else None # Retorna None em caso de erro de requisição
+    return dados.get("dados", []) if dados else None 
 
 @st.cache_data(show_spinner=False)
 def buscar_deputado_por_id(id_deputado):
@@ -49,7 +49,7 @@ def buscar_proposicoes_por_deputado(id_deputado):
     dados = requisitar_json(url)
     return dados.get("dados", []) if dados else None
 
-st.sidebar.header("🔍 Buscar Deputado")
+st.sidebar.header("Buscar Deputado")
 nome_busca = st.sidebar.text_input("Digite o nome do deputado:")
 buscar_btn = st.sidebar.button("Buscar")
 
